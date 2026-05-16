@@ -44,8 +44,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-import src.generate as generate_module
-from src.generate import (
+import server.src.generate as generate_module
+from server.src.generate import (
     GenerationResult,
     _build_user_message,
     _CITATION_RE,
@@ -55,9 +55,9 @@ from src.generate import (
     answer,
     generate,
 )
-from src.pipeline import PipelineResult
-from src.query import ParsedQuery
-from src.retrieve import LOW_CONFIDENCE_MESSAGE, EMPTY_FILTER_MESSAGE, Hit, RetrievalResult
+from server.src.pipeline import PipelineResult
+from server.src.query import ParsedQuery
+from server.src.retrieve import LOW_CONFIDENCE_MESSAGE, EMPTY_FILTER_MESSAGE, Hit, RetrievalResult
 
 
 # --- fixture helpers ---------------------------------------------------------

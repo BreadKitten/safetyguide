@@ -27,8 +27,8 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-import src.query as query_module
-from src.query import ParsedQuery, parse_query
+import server.src.query as query_module
+from server.src.query import ParsedQuery, parse_query
 
 # Accuracy bar for the labeled-tag test. 70% is deliberately lenient for v1
 # -- we tighten it once we have a feel for Qwen's behavior on this corpus

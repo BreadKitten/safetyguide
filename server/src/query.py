@@ -40,7 +40,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from src.ingest import INDEX_DIR
+from server.src.ingest import INDEX_DIR
 
 # --- tuning knobs ------------------------------------------------------------
 # MODEL_PATH: Q4_K_M GGUF of Qwen2.5-7B-Instruct (see CLAUDE.md for the

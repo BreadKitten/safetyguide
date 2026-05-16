@@ -36,9 +36,9 @@ import re
 import sys
 from dataclasses import dataclass, field
 
-from src.pipeline import PipelineResult, run
-from src.query import _get_llm
-from src.retrieve import LOW_CONFIDENCE_MESSAGE, Hit
+from server.src.pipeline import PipelineResult, run
+from server.src.query import _get_llm
+from server.src.retrieve import LOW_CONFIDENCE_MESSAGE, Hit
 
 # --- tuning knobs ------------------------------------------------------------
 # TEMPERATURE=0: deterministic decoding, matches src/query.py so reruns of

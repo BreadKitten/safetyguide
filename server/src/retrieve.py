@@ -33,7 +33,7 @@ import faiss
 import numpy as np
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
-from src.ingest import EMBED_MODEL, INDEX_DIR, _tokenize
+from server.src.ingest import EMBED_MODEL, INDEX_DIR, _tokenize
 
 # --- tuning knobs ------------------------------------------------------------
 # DENSE_TOP_K / BM25_TOP_K: per-retriever candidate pool before fusion. 15

@@ -25,7 +25,7 @@ import statistics
 from collections import Counter
 from pathlib import Path
 
-from src.ingest import _READY_GOV_TYPE_MAP, _tokenize  # reuse same tokenizer BM25 uses
+from server.src.ingest import _READY_GOV_TYPE_MAP, _tokenize  # reuse same tokenizer BM25 uses
 
 ROOT = Path(__file__).resolve().parent.parent
 CHUNKS_PATH = ROOT / "index" / "chunks.json"

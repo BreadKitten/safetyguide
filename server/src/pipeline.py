@@ -18,8 +18,8 @@ import argparse
 import sys
 from dataclasses import dataclass
 
-from src.query import ParsedQuery, parse_query
-from src.retrieve import FINAL_TOP_K, RetrievalResult, retrieve
+from server.src.query import ParsedQuery, parse_query
+from server.src.retrieve import FINAL_TOP_K, RetrievalResult, retrieve
 
 
 # --- public types ------------------------------------------------------------
