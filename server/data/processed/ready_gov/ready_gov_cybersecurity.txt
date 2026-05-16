@@ -1,0 +1,89 @@
+# Cybersecurity
+
+Cyberattacks are malicious attempts to access or damage a computer or network system. Cyberattacks can lead to the loss of money or the theft of personal, financial and medical information. These attacks can damage your reputation and safety.
+
+Cybersecurity involves preventing, detecting and responding to those cyberattacks that can have wide-ranging effects on individuals, organizations, the community and the nation.
+
+Cyberattacks can occur in many ways, including:
+
+Accessing your personal computers, mobile phones, gaming systems and other internet- and Bluetooth-connected devices.
+
+Damaging your financial security, including identity theft.
+
+Blocking your access or deleting your personal information and accounts.
+
+Complicating your employment or business services.
+
+Impacting transportation and the power grid.
+
+Protect Yourself Against Cyberattacks
+
+You can avoid cyber risks by taking steps in advance:
+
+Limit the personal information you share online. Change privacy settings and do not use location features.
+
+Keep software applications and operating systems up-to-date.
+
+Create strong passwords by using upper and lower case letters, numbers and special characters. Use a password manager and two methods of verification.
+
+Watch for suspicious activity that asks you to do something right away, offers something that sounds too good to be true, or needs your personal information. Think before you click. When in doubt, do NOT click.
+
+Protect your home and/or business using a secure Internet connection and Wi-Fi network, and change passwords regularly.
+
+Don’t share PINs or passwords. Use devices that use biometric scans when possible (e.g. fingerprint scanner or facial recognition).
+
+Check your account statements and credit reports regularly.
+
+Be cautious about sharing personal financial information, such as your bank account number, Social Security number or credit card number. Only share personal information on secure sites that begin with https://. Do not use sites with invalid certificates. Use a Virtual Private Network (VPN) that creates a more secure connection.
+
+Use antivirus and anti-malware solutions, and firewalls to block threats.
+
+Back up your files regularly in an encrypted file or encrypted file storage device.
+
+Do not click on links in texts or emails from people you don’t know. Scammers can create fake links to websites.
+
+Remember that the government will not call, text or contact you via social media about owing money.
+
+Keep in mind that scammers may try to take advantage of financial fears by calling with work-from-home-opportunities, debt consolidation offers and student loan repayment plans.
+
+During a Cyberattack
+
+Check your credit card and bank statements for unrecognizable charges.
+
+Check your credit reports for any new accounts or loans you didn’t open.
+
+Be alert for emails and social media users that ask for private information.
+
+If you notice strange activity, limit the damage by changing all of your internet account passwords immediately.
+
+Consider turning off the device that has been affected. Take it to a professional to scan for potential viruses and remove any that they find. Remember: A company will not call you and ask for control of your computer to fix it. This is a common scam.
+
+Let work, school or other system owners know what happened.
+
+Run a security scan on your device to make sure your system is not infected or acting more slowly or inefficiently.
+
+If you find a problem, disconnect your device from the Internet and perform a full system restore.
+
+After a Cyberattack
+
+Let the proper federal, state and local authorities know if you believe you have been a victim of a cyberattack.
+
+Contact banks, credit card companies and other financial services companies where you hold accounts. You may need to place holds on accounts that have been attacked. Close any unauthorized credit or charge accounts. Report that someone may be using your identity.
+
+File a report with the Office of the Inspector General (OIG) if you think someone is using your Social Security number illegally.
+
+File a complaint with the FBI Internet Crime Complaint Center (IC3) . They will review the complaint and refer it to the appropriate agency.
+
+File a report with the local police so there is an official record of the incident.
+
+Report identity theft to the Federal Trade Commission .
+
+Contact the Federal Trade Commission (FTC) at ftc.gov/complaint if you receive messages from anyone claiming to be a government agent.
+
+Contact additional agencies depending on what information was stolen. Examples include contacting: The Social Security Administration (800-269- 0271) if your Social Security number was compromised, or The Department of Motor Vehicles if your driver's license or car registration has been stolen.
+
+The Social Security Administration (800-269- 0271) if your Social Security number was compromised, or
+
+The Department of Motor Vehicles if your driver's license or car registration has been stolen.
+
+Report online crime or fraud to the Internet Crime Complaint Center .

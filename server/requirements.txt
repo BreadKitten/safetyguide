@@ -1,0 +1,35 @@
+# Disaster Relief Chatbot — Python dependencies
+#
+# Python: 3.10 – 3.13 supported.
+#
+# Install order (MacBook Air, Apple Silicon):
+#   1. python -m venv .venv && source .venv/bin/activate
+#   2. pip install --upgrade pip
+#   3. pip install -r requirements.txt          # everything except the LLM runtime
+#   4. CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python --no-cache-dir
+#      ^ Builds with Apple Metal GPU support. Skip the CMAKE_ARGS prefix on
+#        non-Mac machines; pip will compile a CPU-only build.
+
+# --- Core RAG pipeline ---
+sentence-transformers>=3.0        # bge-small-en-v1.5 embeddings + bge-reranker-base
+faiss-cpu>=1.13.0                 # vector index (CPU build, Apple Silicon supported)
+rank-bm25>=0.2.2                  # keyword search
+numpy>=1.26,<3                    # broad compatibility band
+
+# --- Document ingestion ---
+pdfplumber>=0.11                  # text PDFs (FEMA, Red Cross, CDC guides)
+beautifulsoup4>=4.12              # HTML pages (Ready.gov, CDC)
+lxml>=5.3                         # bs4 backend, faster than html.parser
+
+# --- Chunking ---
+langchain-text-splitters>=0.3     # RecursiveCharacterTextSplitter only — no full LangChain
+tiktoken>=0.7                     # token counting for chunk sizing
+
+# --- UI ---
+gradio>=4.44
+
+# --- Utilities ---
+tqdm>=4.66                        # progress bars during ingestion
+
+# --- LLM runtime (install separately, see header above) ---
+llama-cpp-python>=0.3              # Qwen2.5-7B-Instruct Q4_K_M GGUF inference

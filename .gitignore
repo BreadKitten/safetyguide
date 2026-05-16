@@ -1,0 +1,8 @@
+CLAUDE.md
+.claude/*
+.venv/*
+models/*
+!models/.gitkeep
+src/__pycache__/*
+index/*
+!index/.gitkeep
