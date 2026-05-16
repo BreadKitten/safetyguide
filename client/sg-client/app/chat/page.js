@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useRef, useEffect } from 'react';
 
 // Each message: { role: "user" | "assistant", text, citations?, gated? }.
