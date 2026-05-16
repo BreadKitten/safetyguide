@@ -19,6 +19,10 @@ The demo walks through two queries against the deployed system:
 
 It also shows the interactive PNW resource map.
 
+### Slide deck
+
+View our hackathon presentation: **[SafetyGuide.AI slide deck (Canva)](https://canva.link/dbib27r46a93nfv)** — covers the motivation, architecture, guardrails, and roadmap in pitch form.
+
 ---
 
 ## Screenshots
