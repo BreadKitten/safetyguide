@@ -1,6 +1,6 @@
 export function SafetyAnchor() {
   return (
-    <div className='ui w-full bg-sage-900/95 text-cream-50 text-sm backdrop-blur'>
+    <div className='ui w-full bg-sage-500 text-cream-50 text-sm backdrop-blur'>
       <div className='mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-5 py-2.5'>
         <div className='flex items-center gap-2'>
           {/* <span className="breath" aria-hidden="true" /> */}

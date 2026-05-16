@@ -1,15 +1,15 @@
-import "./globals.css";
+import './globals.css';
 
 export const metadata = {
-  title: "SafetyGuide - Offline Disaster Relief Assistant",
+  title: 'SAFETYGUIDE',
   description:
-    "A local-first disaster preparedness assistant grounded in emergency guidance sources.",
+    'A local-first disaster preparedness assistant grounded in emergency guidance sources.',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full">
-      <body className="min-h-full">{children}</body>
+    <html lang='en' className='h-full'>
+      <body className='min-h-full'>{children}</body>
     </html>
   );
 }

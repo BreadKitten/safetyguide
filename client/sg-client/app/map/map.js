@@ -1,114 +1,148 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import * as d3 from 'd3';
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  GeoJSON,
+  Popup,
+} from 'react-leaflet';
+import { useEffect, useState } from 'react';
+
+import 'leaflet/dist/leaflet.css';
 
 export default function Map() {
-  const svgRef = useRef(null);
+  const [police, setPolice] = useState(null);
+  const [fire, setFire] = useState(null);
+  const [hospital, setHospital] = useState(null);
+  const [counties, setCounties] = useState(null);
 
   useEffect(() => {
-    const width = 1200;
-    const height = 800;
-
-    const svg = d3.select(svgRef.current);
-
-    svg.selectAll('*').remove();
-
-    svg
-      .attr('width', width)
-      .attr('height', height)
-      .style('background', '#dbeafe');
-
-    const g = svg.append('g');
-
-    // Zoom + Pan
-    const zoom = d3
-      .zoom()
-      .scaleExtent([0.5, 20])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
-
-    svg.call(zoom);
-
     Promise.all([
-      d3.json(
-        'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson',
-      ),
-      d3.json('/policestation.geojson'),
-      d3.json('/firestation.geojson'),
-      d3.json('/wa_counties.geojson'),
-    ]).then(([world, policeGeojson, fireGeojson, countyGeojson]) => {
-      const combinedFeatures = [
-        ...policeGeojson.features,
-        ...fireGeojson.features,
-      ];
-
-      const combinedGeojson = {
-        type: 'FeatureCollection',
-        features: combinedFeatures,
-      };
-
-      // Projection
-      const projection = d3
-        .geoAlbersUsa()
-        .fitSize([width, height], combinedGeojson);
-
-      const path = d3.geoPath().projection(projection);
-
-      g.selectAll('path')
-        .data(world.features)
-        .enter()
-        .append('path')
-        .attr('d', path)
-        .attr('fill', d3.rgb(230, 230, 208))
-        .attr('stroke', '#9ca3af')
-        .attr('stroke-width', 0.5);
-
-      g.selectAll('path').attr('d', path);
-
-      g.selectAll('.fire-circle')
-        .data(fireGeojson.features)
-        .enter()
-        .append('circle')
-        .attr('class', 'fire-circle')
-        .attr('cx', (d) => projection(d.geometry.coordinates)[0])
-        .attr('cy', (d) => projection(d.geometry.coordinates)[1])
-        .attr('r', 5)
-        .attr('fill', '#dc2626')
-        .attr('stroke', 'white')
-        .attr('stroke-width', 1.5)
-        .append('title');
-
-      g.selectAll('.police-circle')
-        .data(policeGeojson.features)
-        .enter()
-        .append('circle')
-        .attr('class', 'police-circle')
-        .attr('cx', (d) => projection(d.geometry.coordinates)[0])
-        .attr('cy', (d) => projection(d.geometry.coordinates)[1])
-        .attr('r', 5)
-        .attr('fill', '#2563eb')
-        .attr('stroke', 'white')
-        .attr('stroke-width', 1.5)
-        .append('title');
-
-      g.selectAll('.county')
-        .data(countyGeojson.features)
-        .enter()
-        .append('path')
-        .attr('class', 'county')
-        .attr('d', path)
-        .attr('fill', 'none')
-        .attr('stroke', '#374151')
-        .attr('stroke-width', 1)
-        .attr('opacity', 0.8);
+      fetch('/policestation.geojson').then((r) => r.json()),
+      fetch('/firestation.geojson').then((r) => r.json()),
+      fetch('/hospital.geojson').then((r) => r.json()),
+      fetch('/wa_counties.geojson').then((r) => r.json()),
+    ]).then(([p, f, h, c]) => {
+      setPolice(p);
+      setFire(f);
+      setHospital(h);
+      setCounties(c);
     });
   }, []);
 
+  const center = [47.5, -120.5];
+
   return (
-    <div className='w-full h-screen overflow-hidden'>
-      <svg ref={svgRef}></svg>
+    <div className='w-full h-screen'>
+      <MapContainer
+        center={center}
+        zoom={7}
+        scrollWheelZoom={true}
+        className='w-full h-full'
+      >
+        {/* SATELLITE TILE LAYER */}
+        <TileLayer
+          url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          attribution='Tiles © Esri'
+        />
+
+        {/* COUNTY BORDERS */}
+        {counties && (
+          <GeoJSON
+            data={counties}
+            style={{
+              color: '#374151',
+              weight: 1,
+              fillOpacity: 0,
+            }}
+          />
+        )}
+
+        {/* FIRE STATIONS (RED) */}
+        {fire &&
+          fire.features.map((f) => {
+            const [lng, lat] = f.geometry.coordinates;
+
+            return (
+              <CircleMarker
+                key={f.properties.OBJECTID}
+                center={[lat, lng]}
+                radius={5}
+                pathOptions={{
+                  color: 'white',
+                  weight: 1,
+                  fillColor: '#dc2626',
+                  fillOpacity: 1,
+                }}
+              >
+                <Popup>
+                  <strong>Fire Station</strong>
+                  <br />
+                  {f.properties.NAME}
+                  <br />
+                  {f.properties.ADDRESS}
+                </Popup>
+              </CircleMarker>
+            );
+          })}
+
+        {/* POLICE STATIONS (BLUE) */}
+        {police &&
+          police.features.map((p) => {
+            const [lng, lat] = p.geometry.coordinates;
+
+            return (
+              <CircleMarker
+                key={p.properties.OBJECTID}
+                center={[lat, lng]}
+                radius={5}
+                pathOptions={{
+                  color: 'white',
+                  weight: 1,
+                  fillColor: '#2563eb',
+                  fillOpacity: 1,
+                }}
+              >
+                <Popup>
+                  <strong>Police Station</strong>
+                  <br />
+                  {p.properties.NAME}
+                  <br />
+                  {p.properties.ADDRESS}
+                </Popup>
+              </CircleMarker>
+            );
+          })}
+
+        {/* HOSPITALS (GREEN) */}
+        {hospital &&
+          hospital.features.map((h) => {
+            const [lng, lat] = h.geometry.coordinates;
+
+            return (
+              <CircleMarker
+                key={h.properties.OBJECTID}
+                center={[lat, lng]}
+                radius={5}
+                pathOptions={{
+                  color: 'white',
+                  weight: 1,
+                  fillColor: 'green',
+                  fillOpacity: 1,
+                }}
+              >
+                <Popup>
+                  <strong>Hospital</strong>
+                  <br />
+                  {h.properties.NAME}
+                  <br />
+                  {h.properties.ADDRESS}
+                </Popup>
+              </CircleMarker>
+            );
+          })}
+      </MapContainer>
     </div>
   );
 }

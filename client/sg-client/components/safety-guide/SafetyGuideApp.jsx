@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { askSafetyGuide } from "@/lib/safety-guide/api";
-import { AnimatedBackground } from "./AnimatedBackground";
-import { AppHeader } from "./AppHeader";
-import { ChatComposer } from "./ChatComposer";
-import { MessageThread } from "./MessageThread";
-import { SafetyAnchor } from "./SafetyAnchor";
-import { ScopeNote } from "./ScopeNote";
-import { StarterPrompts } from "./StarterPrompts";
+import { useEffect, useRef, useState } from 'react';
+import { askSafetyGuide } from '@/lib/safety-guide/api';
+import { AnimatedBackground } from './AnimatedBackground';
+import { AppHeader } from './AppHeader';
+import { ChatComposer } from './ChatComposer';
+import { MessageThread } from './MessageThread';
+import { SafetyAnchor } from './SafetyAnchor';
+import { ScopeNote } from './ScopeNote';
+import { StarterPrompts } from './StarterPrompts';
 
 export function SafetyGuideApp() {
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState([]);
   const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   async function handleSubmit(event) {
@@ -29,17 +29,17 @@ export function SafetyGuideApp() {
     }
 
     const userMessage = {
-      id: createId("user"),
-      role: "user",
+      id: createId('user'),
+      role: 'user',
       text: query,
     };
     const assistantMessage = {
-      id: createId("assistant"),
-      role: "assistant",
-      status: "loading",
+      id: createId('assistant'),
+      role: 'assistant',
+      status: 'loading',
     };
 
-    setDraft("");
+    setDraft('');
     setIsSending(true);
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -52,7 +52,7 @@ export function SafetyGuideApp() {
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
           message.id === assistantMessage.id
-            ? { ...message, status: "done", result }
+            ? { ...message, status: 'done', result }
             : message,
         ),
       );
@@ -63,9 +63,9 @@ export function SafetyGuideApp() {
           message.id === assistantMessage.id
             ? {
                 ...message,
-                status: "done",
+                status: 'done',
                 result: {
-                  answer: "",
+                  answer: '',
                   citations: [],
                   gated: true,
                   confidence: 0,
@@ -87,11 +87,11 @@ export function SafetyGuideApp() {
 
   return (
     <>
-      <AnimatedBackground />
+      {/* <AnimatedBackground /> */}
       <SafetyAnchor />
       <AppHeader />
       <MessageThread messages={messages} />
-      <section className="mx-auto mt-6 max-w-4xl px-5 pb-32">
+      <section className='mx-auto mt-6 max-w-4xl px-5 pb-32'>
         <ChatComposer
           disabled={isSending}
           draft={draft}
@@ -107,7 +107,7 @@ export function SafetyGuideApp() {
 }
 
 function createId(prefix) {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `${prefix}-${crypto.randomUUID()}`;
   }
 
