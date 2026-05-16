@@ -1,61 +1,151 @@
-export function ChatComposer({
-  disabled,
-  draft,
-  onDraftChange,
-  onSubmit,
-  textareaRef,
-}) {
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+
+export default function Home() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [messages, busy]);
+
+  async function send(e) {
+    e.preventDefault();
+    const query = input.trim();
+    if (!query || busy) return;
+
+    setMessages((m) => [...m, { role: 'user', text: query }]);
+    setInput('');
+    setBusy(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+
+      const data = await res.json();
+
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'assistant',
+          text: data.answer,
+          citations: data.citations ?? [],
+          gated: !!data.gated,
+        },
+      ]);
+    } catch (err) {
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'assistant',
+          text: `Network error: ${String(err)}`,
+          gated: true,
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <form
-      className="composer-card reveal relative rounded-lg border border-sage-100 p-2"
-      onSubmit={onSubmit}
-    >
-      <label htmlFor="safety-guide-question" className="sr-only">
-        Ask a question
-      </label>
-      <textarea
-        id="safety-guide-question"
-        ref={textareaRef}
-        rows={3}
-        value={draft}
-        disabled={disabled}
-        className="ui w-full resize-none rounded-lg bg-transparent px-4 py-3 text-base text-ink-900 placeholder-sage-700/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
-        placeholder="For example: What should I do in the first minutes of a strong earthquake?"
-        onChange={(event) => onDraftChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            event.currentTarget.form?.requestSubmit();
-          }
-        }}
-      />
-      <div className="ui flex flex-wrap items-center justify-between gap-3 px-2 pb-2 pt-1">
-        <div className="text-xs text-sage-700">
-          Press{" "}
-          <kbd className="rounded border border-cream-200 bg-cream-100 px-1.5 py-0.5">
-            Enter
-          </kbd>{" "}
-          to send /{" "}
-          <kbd className="rounded border border-cream-200 bg-cream-100 px-1.5 py-0.5">
-            Shift
-          </kbd>
-          +
-          <kbd className="rounded border border-cream-200 bg-cream-100 px-1.5 py-0.5">
-            Enter
-          </kbd>{" "}
-          for a new line
+    <div className='flex flex-col min-h-screen bg-cream-50'>
+      {/* Header */}
+      <header className='border-b border-sage-200 bg-cream-100 px-4 py-2 text-sm text-ink-900'>
+        <strong>Emergency?</strong> Call 911. This assistant is for preparation
+        and general guidance only.
+      </header>
+
+      <main className='mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6'>
+        <h1 className='mb-4 text-2xl font-semibold text-ink-900'>
+          SafetyGuide
+        </h1>
+
+        {/* Messages */}
+        <div ref={scrollRef} className='flex-1 space-y-4 overflow-y-auto pb-4'>
+          {messages.length === 0 && (
+            <p className='text-sm text-sage-700'>
+              Ask about earthquakes, wildfires, floods, power outages, or other
+              disaster prep. Answers are grounded in local sources only.
+            </p>
+          )}
+
+          {messages.map((m, i) => (
+            <Message key={i} m={m} />
+          ))}
+
+          {busy && (
+            <div className='text-sm italic text-sage-700'>Thinking…</div>
+          )}
         </div>
-        <button
-          type="submit"
-          disabled={disabled || !draft.trim()}
-          className="send-btn inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-cream-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Ask SafetyGuide
-          <span className="arrow" aria-hidden="true">
-            -&gt;
-          </span>
-        </button>
+
+        {/* Input */}
+        <form onSubmit={send} className='mt-2 flex gap-2'>
+          <input
+            type='text'
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={busy}
+            placeholder='What should I do during an earthquake?'
+            className='flex-1 rounded-lg border border-sage-200 bg-white px-4 py-3 text-ink-900 placeholder-sage-700/60 outline-none focus:border-sage-400 disabled:opacity-60'
+          />
+          <button
+            type='submit'
+            disabled={busy || !input.trim()}
+            className='rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-cream-50 transition hover:bg-ink-800 disabled:opacity-50'
+          >
+            Send →
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+}
+
+function Message({ m }) {
+  const isUser = m.role === 'user';
+
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-3 border ${
+          isUser
+            ? 'bg-ink-900 text-cream-50 border-ink-900'
+            : 'bg-white text-ink-900 border-sage-100'
+        }`}
+      >
+        <div className='whitespace-pre-wrap text-sm leading-relaxed'>
+          {m.text}
+        </div>
+
+        {!isUser && m.citations?.length > 0 && (
+          <ol className='mt-3 space-y-1 border-t border-sage-100 pt-2 text-xs text-sage-700'>
+            {m.citations.map((c, idx) => (
+              <li key={c.chunk_id ?? idx}>
+                <details>
+                  <summary className='cursor-pointer'>
+                    <span className='font-mono'>[{idx + 1}]</span>{' '}
+                    <span className='font-medium'>{basename(c.source)}</span>
+                    {c.page ? ` · p.${c.page}` : ''}
+                    {c.disaster_type && c.disaster_type !== 'general'
+                      ? ` · ${c.disaster_type}`
+                      : ''}
+                  </summary>
+
+                  <p className='mt-1 whitespace-pre-wrap pl-6 text-sage-600'>
+                    {c.text}
+                  </p>
+                </details>
+              </li>
+            ))}
+          </ol>
+        )}
       </div>
-    </form>
+    </div>
   );
 }
