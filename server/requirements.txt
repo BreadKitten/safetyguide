@@ -25,8 +25,9 @@ lxml>=5.3                         # bs4 backend, faster than html.parser
 langchain-text-splitters>=0.3     # RecursiveCharacterTextSplitter only — no full LangChain
 tiktoken>=0.7                     # token counting for chunk sizing
 
-# --- UI ---
-gradio>=4.44
+# --- HTTP shim (Next.js client proxies to FastAPI; see src/app.py) ---
+fastapi>=0.115
+uvicorn>=0.32
 
 # --- Utilities ---
 tqdm>=4.66                        # progress bars during ingestion
