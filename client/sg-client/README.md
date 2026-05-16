@@ -16,9 +16,30 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Backend connection
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The chat UI calls `lib/safety-guide/api.js`. To connect a real backend, create
+`.env.local` and point the client at your chat endpoint:
+
+```bash
+NEXT_PUBLIC_SAFETY_GUIDE_ENDPOINT=http://localhost:8000/chat
+```
+
+The endpoint should accept `POST { "query": "..." }` and return:
+
+```json
+{
+  "answer": "text with [1] citation markers",
+  "citations": [{ "source": "Ready.gov", "page": 1, "text": "..." }],
+  "gated": false,
+  "confidence": 0.92
+}
+```
+
+If the env var is not set, the frontend uses a local dev stub.
+
+The screen is split across `components/safety-guide`, while backend wiring lives
+in `lib/safety-guide/api.js`.
 
 ## Learn More
 
