@@ -299,4 +299,3 @@ PYTHONPATH=server python -m server.tests.test_generate --with-llm
 - Every `server/src/` module stays runnable as a script (`PYTHONPATH=server python -m server.src.<name>`) for fast iteration in isolation.
 - No new dependencies that need a network connection at runtime. Hugging Face downloads must be cached locally before any offline demo.
 - Comments explain *why*, not *what*. The reference style lives in [`server/src/retrieve.py`](server/src/retrieve.py) and [`server/src/ingest.py`](server/src/ingest.py).
-- See [`CLAUDE.md`](CLAUDE.md) for the full set of project conventions, including the index-row-alignment invariant and design rationale for each pipeline stage.
