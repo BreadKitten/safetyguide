@@ -163,8 +163,4 @@ function Message({ m }) {
   );
 }
 
-function basename(path) {
-  if (!path) return 'source';
-  const parts = String(path).split(/[\\/]/);
-  return parts[parts.length - 1] || path;
-}
+// Test
