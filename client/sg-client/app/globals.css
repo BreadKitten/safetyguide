@@ -23,11 +23,6 @@
   --color-ink-900: #1f1e1b;
 }
 
-:root {
-  --background: #b8c8e0;
-  --foreground: #1f1e1b;
-}
-
 html,
 body {
   color: var(--foreground);
@@ -37,7 +32,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background: var(--background);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: Georgia, 'Times New Roman', serif;
   line-height: 1.65;
 }
 
@@ -59,11 +54,17 @@ button:focus {
 }
 
 .ui {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
-.aurora {
+/* .aurora {
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -78,7 +79,7 @@ button:focus {
     #f08040 100%
   );
   animation: sky 14s ease-in-out infinite alternate;
-}
+} */
 
 @keyframes sky {
   0% {
