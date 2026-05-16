@@ -23,9 +23,6 @@ It also shows the interactive PNW resource map.
 
 ## Screenshots
 
-![SafetyGuide chatbot UI](docs/screenshots/chatbot.png)
-*The SafetyGuide chat interface answering a disaster-preparedness question with inline citations back to the source knowledge base.*
-
 ![Interactive PNW resource map](docs/screenshots/map.png)
 *The interactive Pacific Northwest resource map — Information at a Glance (IAAG) for nearby emergency services, shelters, and response infrastructure.*
 
