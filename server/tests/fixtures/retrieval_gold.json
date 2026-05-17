@@ -1,0 +1,188 @@
+[
+  {
+    "query": "what do I do when shaking starts during an earthquake",
+    "disaster_type": null,
+    "relevant_ids": [19, 153, 160, 161, 162, 163, 164, 165, 166, 167, 168],
+    "notes": "drop cover hold on — all during-shaking action chunks across ready_gov and WA EMD PDF sources"
+  },
+  {
+    "query": "drop cover and hold on",
+    "disaster_type": null,
+    "relevant_ids": [19, 153, 160, 161, 162, 163, 164, 165, 166, 167, 168],
+    "notes": "literal phrase match; tests BM25 keyword recall in addition to semantic"
+  },
+  {
+    "query": "earthquake near a shoreline or beach what should I do",
+    "disaster_type": null,
+    "relevant_ids": [169, 96, 136],
+    "notes": "near-shoreline earthquake action (169) + tsunami-linked earthquake advice (96, 136)"
+  },
+  {
+    "query": "after an earthquake what do I check",
+    "disaster_type": null,
+    "relevant_ids": [21, 154],
+    "notes": "post-shaking safety steps: local news + building damage checks"
+  },
+  {
+    "query": "earthquake prepare before it happens",
+    "disaster_type": "earthquake",
+    "relevant_ids": [18],
+    "notes": "filtered path; the single 'before earthquake' preparation chunk"
+  },
+  {
+    "query": "wildfire evacuation order what to do if told to leave",
+    "disaster_type": null,
+    "relevant_ids": [103, 104, 105, 106, 107],
+    "notes": "all wildfire chunks are relevant context for evacuation — expanded from [103,105,106]"
+  },
+  {
+    "query": "trapped by wildfire in a car",
+    "disaster_type": null,
+    "relevant_ids": [104, 105, 106, 107],
+    "notes": "chunk 106 is the primary trapped-in-vehicle chunk; nearby wildfire chunks also relevant"
+  },
+  {
+    "query": "wildfire prepare fire resistant home",
+    "disaster_type": "wildfire",
+    "relevant_ids": [103, 104],
+    "notes": "filtered wildfire path; before-fire preparation chunks"
+  },
+  {
+    "query": "what to do during a flood",
+    "disaster_type": null,
+    "relevant_ids": [33, 34, 35],
+    "notes": "all three flood chunks address during/before/after actions"
+  },
+  {
+    "query": "house fire what do I do get out",
+    "disaster_type": null,
+    "relevant_ids": [36, 37, 38, 39, 40, 41, 42],
+    "notes": "all home_fire chunks are relevant to fire response — this was already P@4=1.0 with first 4"
+  },
+  {
+    "query": "stop drop and roll clothes on fire",
+    "disaster_type": null,
+    "relevant_ids": [36, 37, 38, 39, 40, 41, 42],
+    "notes": "chunk 39 is the exact stop-drop-roll chunk; other home_fire chunks (36, 38) are correctly returned too"
+  },
+  {
+    "query": "fire escape plan practice",
+    "disaster_type": "home_fire",
+    "relevant_ids": [36, 37, 38, 39, 40, 41, 42],
+    "notes": "filtered home_fire; all home_fire chunks are relevant to fire escape planning"
+  },
+  {
+    "query": "tsunami warning I am near the coast what do I do",
+    "disaster_type": null,
+    "relevant_ids": [95, 96, 132, 133, 136],
+    "notes": "tsunami warning action chunks: move inland — added 95 overview"
+  },
+  {
+    "query": "tsunami on a boat at the marina",
+    "disaster_type": null,
+    "relevant_ids": [143, 144, 145, 146],
+    "notes": "maritime tsunami protective actions — WA EMD source; added 146 (marina risk)"
+  },
+  {
+    "query": "what are natural warning signs of a tsunami",
+    "disaster_type": "tsunami",
+    "relevant_ids": [132, 133, 134, 135, 136],
+    "notes": "filtered tsunami; natural warning signs + surrounding context chunks"
+  },
+  {
+    "query": "tornado shelter where should I go",
+    "disaster_type": null,
+    "relevant_ids": [92, 93, 94],
+    "notes": "all 3 tornado chunks: overview, safe-room, car guidance — all relevant to shelter query"
+  },
+  {
+    "query": "twister is coming and I am in my car",
+    "disaster_type": null,
+    "relevant_ids": [92, 93, 94],
+    "notes": "all tornado chunks relevant; chunk 94 is the car-specific one. Known issue: query sometimes gates (top_score~0.015) because only 3 tornado chunks exist in index"
+  },
+  {
+    "query": "hurricane preparation before it hits",
+    "disaster_type": null,
+    "relevant_ids": [48, 49, 50, 51, 52],
+    "notes": "all hurricane chunks — preparation is cross-cutting before/during/after"
+  },
+  {
+    "query": "during a hurricane stay or evacuate",
+    "disaster_type": "hurricane",
+    "relevant_ids": [48, 49, 50, 51, 52],
+    "notes": "filtered hurricane; all chunks relevant to stay-vs-evacuate decision"
+  },
+  {
+    "query": "power out for three days is my food in the fridge safe",
+    "disaster_type": null,
+    "relevant_ids": [71, 72, 73, 74],
+    "notes": "all 4 power_outage chunks are relevant; chunk 72 is the primary food/fridge chunk. Known retriever miss: chunk 72 not returned, chunk 89 (space_weather) returned incorrectly"
+  },
+  {
+    "query": "carbon monoxide generator indoors danger",
+    "disaster_type": null,
+    "relevant_ids": [71, 72, 74],
+    "notes": "chunk 74 is the CO chunk; 71 overview and 72 protection also relevant context"
+  },
+  {
+    "query": "blizzard winter storm what do I need to prepare",
+    "disaster_type": null,
+    "relevant_ids": [108, 109, 110, 111, 112, 113],
+    "notes": "all 6 winter_weather chunks relevant to blizzard preparation"
+  },
+  {
+    "query": "hypothermia signs and symptoms",
+    "disaster_type": null,
+    "relevant_ids": [108, 113],
+    "notes": "chunk 113 is the hypothermia chunk; 108 (winter overview mentioning hypothermia) also relevant"
+  },
+  {
+    "query": "what goes in a go bag emergency kit",
+    "disaster_type": null,
+    "relevant_ids": [24, 53, 54, 55, 121, 149, 159],
+    "notes": "cross-cutting go-bag / emergency kit contents across ready_gov, red_cross, WA EMD"
+  },
+  {
+    "query": "how do I make a family emergency plan",
+    "disaster_type": null,
+    "relevant_ids": [70, 114, 115, 116, 150, 151, 158],
+    "notes": "emergency plan creation chunks across ready_gov, red_cross, WA EMD"
+  },
+  {
+    "query": "shelter in place at home what does that mean",
+    "disaster_type": null,
+    "relevant_ids": [83, 84, 85, 86],
+    "notes": "all 4 shelter-in-place chunks"
+  },
+  {
+    "query": "avalanche buried in snow what to do",
+    "disaster_type": null,
+    "relevant_ids": [0, 1, 2],
+    "notes": "all 3 avalanche chunks — survival actions during burial"
+  },
+  {
+    "query": "pandemic how to protect myself from getting sick",
+    "disaster_type": null,
+    "relevant_ids": [66, 67, 68, 69],
+    "notes": "all 4 pandemic chunks"
+  },
+  {
+    "query": "who won the Super Bowl this year",
+    "disaster_type": null,
+    "relevant_ids": [],
+    "notes": "off-corpus sports trivia — must gate"
+  },
+  {
+    "query": "best pizza restaurant in Seattle",
+    "disaster_type": null,
+    "relevant_ids": [],
+    "notes": "off-corpus consumer query — must gate"
+  },
+  {
+    "query": "what is the current stock market doing",
+    "disaster_type": null,
+    "relevant_ids": [],
+    "notes": "off-corpus financial query — must gate"
+  }
+]

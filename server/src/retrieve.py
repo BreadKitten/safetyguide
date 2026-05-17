@@ -252,6 +252,28 @@ def _rerank(query: str, candidate_ids: list[int]) -> list[tuple[int, float]]:
     return paired
 
 
+def _retrieve_candidates(
+    query: str,
+    allowed_ids: set[int] | None,
+) -> list[int]:
+    """Dense + BM25 search fused with RRF; return chunk IDs sorted by RRF score.
+
+    Indexes must be loaded before calling. This is the candidate pool before
+    cross-encoder reranking — the evaluation suite calls it directly to measure
+    pre-rerank recall (R@15) without paying the cross-encoder cost.
+    """
+    assert _chunks is not None, "_load_indexes must be called before _retrieve_candidates"
+    query_vec = _get_embedder().encode(
+        [query],
+        normalize_embeddings=True,
+        convert_to_numpy=True,
+    ).astype(np.float32)
+    query_tokens = _tokenize(query)
+    dense = _dense_search(query_vec, DENSE_TOP_K, allowed_ids)
+    sparse = _bm25_search(query_tokens, BM25_TOP_K, allowed_ids)
+    return _rrf_fuse([dense, sparse])
+
+
 # --- public entry point ------------------------------------------------------
 def retrieve(
     query: str,
@@ -271,16 +293,7 @@ def retrieve(
     if allowed_ids is not None and not allowed_ids:
         return RetrievalResult(gated=True, message=EMPTY_FILTER_MESSAGE)
 
-    query_vec = _get_embedder().encode(
-        [query],
-        normalize_embeddings=True,
-        convert_to_numpy=True,
-    ).astype(np.float32)
-    query_tokens = _tokenize(query)
-
-    dense = _dense_search(query_vec, DENSE_TOP_K, allowed_ids)
-    sparse = _bm25_search(query_tokens, BM25_TOP_K, allowed_ids)
-    fused_ids = _rrf_fuse([dense, sparse])
+    fused_ids = _retrieve_candidates(query, allowed_ids)
 
     if not fused_ids:
         return RetrievalResult(gated=True, message=LOW_CONFIDENCE_MESSAGE)
