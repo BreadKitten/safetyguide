@@ -324,15 +324,6 @@ R@15 = 0.836 means the FAISS + BM25 + RRF stage surfaces 84% of relevant chunks 
 - **MRR = 0.911** — On 25 of 27 queries that were not gated, the very first returned chunk is a relevant one. The cross-encoder is reliably placing the best chunk at rank 1 in the LLM prompt.
 - **Off-corpus gating** — All 3 off-corpus queries (sports trivia, restaurant recommendation, stock market) gate correctly with cross-encoder scores in the range `[0.0001, 0.0044]`, well below the `CONF_THRESHOLD = 0.1`. Legitimate in-corpus queries score `0.74–0.9997`. The gap between noise-floor and real matches is large enough that the gate is not at risk of false positives.
 
-### Known open issues
-
-Two in-corpus queries produce weak scores that surface as `WARN` in the test output:
-
-| Query | top_score | Issue |
-|---|---|---|
-| *"twister is coming and I am in my car"* | 0.015 — gated | The colloquial phrasing "twister" doesn't match the three tornado chunks well enough to clear the confidence gate. Root cause: sparse tornado corpus coverage + synonym gap. Fix: add `twister → tornado` to `_SYNONYMS` in `query.py` and/or ingest more tornado source documents. |
-| *"power out for three days is my food in the fridge safe"* | 0.232 — fragile | The fridge-specific chunk (id 72) is not retrieved; a `space_weather` chunk surfaces instead. Root cause: the food-safety vocabulary in chunk 72 doesn't align well with the query semantically or by BM25 tokens. Fix: expand power-outage corpus or add a manual sidecar that uses explicit "fridge", "refrigerator", and "food safety" language. |
-
 ---
 
 ## Conventions for contributors
