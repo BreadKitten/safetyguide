@@ -1,7 +1,5 @@
 # SafetyGuide.AI
 
-Everybody Hacks 2026 — Disaster Response Track
-
 ## Demo
 
 Watch the demo on YouTube: **[SafetyGuide.AI walkthrough](https://youtu.be/UMFcAi7lDxU)**
@@ -76,17 +74,9 @@ User Query → Query Rewrite (LLM) → ┬─ Semantic retrieval (top 15)
 
 ## Challenges we ran into
 
-**Building a fully offline pipeline in 6 hours.** Wiring RAG + a Next.js client in a single hackathon window was a lot. Using a local GGUF model instead of an API endpoint costs real setup time (4.7 GB of weights, Metal configuration) before you can even start iterating on the prompt.
-
 **Multi-column PDFs produced word salad.** Ready.gov brochures have sidebars interleaved with body text. A naive extract turned "You can survive" next to a sidebar header into "You can / Additional Resources / survive." The fix is a column-aware extractor in `_extract_page_text` that builds a horizontal occupancy bitmap per page, finds the empty vertical gutters, and emits each column top-to-bottom. Three poster-style PDFs were unsalvageable algorithmically; those have hand-curated Markdown sidecars in [`server/data/processed/manual_pdfs/`](server/data/processed/manual_pdfs/) instead.
 
-**The confidence threshold was miscalibrated.** We set `CONF_THRESHOLD = 0.0` expecting logits in `[-10, +10]`. Turns out `bge-reranker-base` emits sigmoid-normalized scores in `[0, 1]`. At threshold 0, gibberish queries scoring `0.0001` still passed and produced hallucinated answers. We logged scores across the test set, saw real hits at `0.85–0.99` and noise near `0.0001`, and raised the threshold to `0.1`.
-
-**Citation contamination.** Qwen2.5-7B kept citing real chunks and hedging with the canned refusal phrase in the same answer. We split the prompt rule into two explicit cases — "no context → canned phrase only" and "context → cite, never use the canned phrase" — and added a defensive post-process that strips the canned phrase whenever an answer also has `[n]` markers.
-
-**Disaster-type tagging by content keyword mislabeled brochures.** Tagging any chunk that mentioned "earthquake" as `earthquake` caused multi-hazard prep brochures to get mislabeled the moment they mentioned earthquakes as one of several risks. We replaced this with filename-driven defaults and a tight allowlist of override phrases like "drop, cover, and hold on" that promote individual chunks from `general` into a specific hazard.
-
-**We explicitly forbid the query parser from expanding vocabulary.** If the LLM rewrites "shaky ground" to "drop, cover, and hold on", it smuggles its pretraining knowledge past the grounded-RAG gate by steering retrieval toward what it already believes rather than what the index contains. A hand-maintained synonym table (`_SYNONYMS` in `query.py`) handles colloquial-to-canonical mapping instead.
+**We explicitly forbid the query parser from expanding vocabulary.** If the LLM rewrites "shaky ground" to "drop, cover, and hold on", it smuggles its pretraining knowledge past the grounded-RAG gate by steering retrieval toward what it already believes rather than what the index contains. This is also so that the LLM does not hallucinate synonmys or words that don't exits. A hand-maintained synonym table (`_SYNONYMS` in `query.py`) handles colloquial-to-canonical mapping instead.
 
 **Switching to the 3B model didn't help latency.** We benchmarked Qwen2.5-3B-Instruct Q4_K_M as a drop-in:
 
@@ -105,13 +95,11 @@ The confidence gate actually works. The demo's "Who won the FIFA World Cup?" ref
 
 The safety-first chunk reordering is a small idea with real impact. The cross-encoder ranks for topical relevance, not life-safety priority. A stable-sort by a count of imperative/warning phrases before prompting means truncated answers still lead with the warning — exploiting LLM primacy bias for something useful.
 
-We also shipped not just the RAG pipeline but a full Next.js client, interactive resource map, FastAPI shim, and three inspection-style test suites — all in the hackathon window.
+We also shipped not just the RAG pipeline but a full Next.js client, interactive resource map, FastAPI shim, and three inspection-style test suites.
 
 ---
 
 ## What we learned
-
-Log the empirical distribution of your gating signal before you pick a threshold. Our `CONF_THRESHOLD` story is the textbook example: we set `0.0` based on what we expected the reranker to emit, and it took an evening of logging to discover the actual range was sigmoid-normalized `[0, 1]`.
 
 Small, section-aware chunks beat large ones for 7B-class models. 300 tokens with 30-token overlap and heading-aware splitting produced visibly better citations than the 500–800 token chunks we started with.
 
@@ -124,13 +112,6 @@ A clean refusal is better than a hedge. "I could not find reliable information i
 ## What's next for SafetyGuide.AI
 
 The biggest thing we want to do is get this onto mobile. An offline RAG pipeline running on a phone would make this genuinely accessible to people evacuating without laptop access.
-
-Beyond that:
-- **"Call 911" banner** in the UI — the bot is preparedness guidance, not a substitute for emergency services.
-- **Expand the corpus** — more Cascadia subduction zone material, additional WA EMD content, and eventually support for regions outside the PNW.
-- **Disaster Mode UX** — the query parser already tags a `disaster_type`; we need to decide whether to surface it as a UI dropdown or rely purely on auto-detection.
-- **Single-app packaging** — bundle the Next.js client and FastAPI server into one launchable artifact so the setup experience is less painful.
-- **Automated corpus refresh** — a scripted way to re-pull authoritative sources and rebuild the index.
 
 ---
 
@@ -231,7 +212,6 @@ Drop both into `server/models/`. `llama-cpp-python` auto-loads shard 2 from shar
 ### 4. Build the index
 
 ```bash
-# Optional: re-run cleaners if you've changed server/data/raw/
 PYTHONPATH=server python -m server.scripts.clean_ready_gov
 PYTHONPATH=server python -m server.scripts.clean_red_cross
 PYTHONPATH=server python -m server.scripts.clean_wa_emd
