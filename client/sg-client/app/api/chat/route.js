@@ -2,6 +2,10 @@
 // BACKEND_URL is read on the Next.js server -- never NEXT_PUBLIC_*, so the
 // Python host stays invisible to the browser. CORS is therefore a non-issue.
 //
+// Calls /stream on the backend and pipes the SSE body straight through to
+// the browser without buffering -- upstream.body is a ReadableStream in the
+// Node fetch API so the pipe is zero-copy.
+//
 // NOTE (Next.js 16.2.6): per client/sg-client/AGENTS.md, verify route-handler
 // conventions against node_modules/next/dist/docs/ after `npm install` if
 // anything here breaks.
@@ -23,7 +27,7 @@ export async function POST(req) {
 
   let upstream;
   try {
-    upstream = await fetch(`${backend}/answer`, {
+    upstream = await fetch(`${backend}/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
@@ -35,9 +39,11 @@ export async function POST(req) {
     );
   }
 
-  const body = await upstream.text();
-  return new Response(body, {
+  return new Response(upstream.body, {
     status: upstream.status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+    },
   });
 }

@@ -2,7 +2,7 @@
 
 The final stage of the RAG pipeline: takes a `PipelineResult` (parser output
 plus retrieval result) and produces a grounded answer with `[n]` citation
-markers. The module sits on three load-bearing rules:
+markers. The module sits on two load-bearing rules:
 
   1. **Gating is non-negotiable.** If `retrieval.gated` is True, surface
      `retrieval.message` verbatim and never call the LLM. The retriever's
@@ -10,15 +10,7 @@ markers. The module sits on three load-bearing rules:
      project -- wrong disaster advice is harmful, so the generator must
      respect a closed gate even if it could plausibly synthesize something.
 
-  2. **Citations always.** The system prompt requires a `[n]` marker after
-     every factual statement, where `n` indexes into the numbered context
-     blocks shown to the LLM. We re-prompt once if the first answer contains
-     no markers at all; a second miss is suffixed with an explicit warning
-     rather than dropped, because the gate has already vouched for chunk
-     quality and discarding a probably-correct reply on a formatting slip
-     hurts demo reliability more than the warning helps.
-
-  3. **One LLM, one load.** The Qwen2.5-7B Q4_K_M GGUF is ~4.7 GB. We import
+  2. **One LLM, one load.** The Qwen2.5-7B Q4_K_M GGUF is ~4.7 GB. We import
      `_get_llm` from `src.query` rather than instantiating `Llama` again --
      a second load in the same process OOMs a laptop.
 
@@ -28,13 +20,17 @@ encoder ranks for topical relevance, not life-safety priority; reordering
 exploits both the LLM's primacy bias and the user's, so even a truncated
 answer leads with the warning. `GenerationResult.citations` is returned in
 the reordered order so `[n]` markers in the answer match the citations list.
+
+`answer_stream` is the streaming entry point used by the FastAPI `/stream`
+endpoint; it yields typed event dicts (meta, token, done) so the UI can
+render tokens as they arrive.
 """
 from __future__ import annotations
 
 import argparse
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 from server.src.pipeline import PipelineResult, run
 from server.src.query import _get_llm
@@ -45,9 +41,8 @@ from server.src.retrieve import LOW_CONFIDENCE_MESSAGE, Hit
 # the same query produce byte-identical answers for demo / debugging.
 # MAX_TOKENS=384: budgeted against N_CTX=2048 (set in src/query.py). A
 # typical call uses ~250 tokens for the system prompt, ~30 for the user
-# wrapper + question, and 4 chunks at ~300 tokens each = ~1500 used, which
-# leaves ~500 for the answer. 384 covers a 4-6 bullet response with [n]
-# markers and still has headroom for the chat template's wrapping tokens.
+# wrapper + question, and 4 chunks × ~300 tokens = ~1500 used, leaving ~500
+# of headroom. 384 covers a 4-6 bullet response with [n] markers.
 TEMPERATURE = 0.0
 MAX_TOKENS = 384
 
@@ -191,12 +186,9 @@ def _build_user_message(question: str, hits: list[Hit]) -> str:
     return "\n".join(blocks)
 
 
-# --- LLM call & citation retry -----------------------------------------------
-# Regex for any `[n]` citation marker. We deliberately do not validate that
-# `n` is in range -- the system prompt constrains it, and a stray `[42]` is
-# still a stronger grounding signal than none at all. False negatives on
-# citation detection are more harmful (triggers a useless re-prompt) than
-# false positives (lets a slightly off marker through).
+# --- LLM calls ---------------------------------------------------------------
+# Regex for any `[n]` citation marker. Used by _strip_canned_phrase_from_cited_answer
+# to detect whether a response is a cited answer or the bare canned phrase.
 _CITATION_RE = re.compile(r"\[\d+\]")
 
 
@@ -212,9 +204,7 @@ def _strip_canned_phrase_from_cited_answer(text: str) -> str:
     claims, and the canned phrase is reserved for the empty-context case
     (system prompt rule 2a). If both coexist, we trust the citations and
     drop the phrase. If the answer has no [n] markers, we leave it alone --
-    it may legitimately BE the canned reply via rule 2a, or it may be the
-    soft-warning suffix the retry path produces; either way the strip would
-    do the wrong thing there.
+    it may legitimately BE the canned reply via rule 2a.
     """
     if not _has_citation_markers(text):
         return text
@@ -244,38 +234,23 @@ def _call_llm(question: str, hits: list[Hit]) -> str:
     return resp["choices"][0]["message"]["content"].strip()
 
 
-def _call_llm_retry_with_citation_demand(
-    question: str,
-    hits: list[Hit],
-    prior_answer: str,
-) -> str:
-    """Re-prompt once when the first answer had no `[n]` markers.
-
-    Replays the original system+user turn, attaches the prior (unmarked)
-    answer as the assistant turn, and follows with a user turn that demands
-    citations. We cap at one retry -- a second miss is rare and would push
-    the wall-clock past the sub-10s demo target.
-    """
+def _call_llm_stream(question: str, hits: list[Hit]):
+    """Streaming LLM call. Yields raw token strings as they are produced."""
     llm = _get_llm()
-    resp = llm.create_chat_completion(
+    stream = llm.create_chat_completion(
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": _build_user_message(question, hits)},
-            {"role": "assistant", "content": prior_answer},
-            {
-                "role": "user",
-                "content": (
-                    "Your previous answer contained no [n] citation markers. "
-                    "Rewrite your answer with a [n] marker after every "
-                    "factual statement, where n refers to the numbered "
-                    "context block that supports the statement."
-                ),
-            },
         ],
         temperature=TEMPERATURE,
         max_tokens=MAX_TOKENS,
+        stream=True,
     )
-    return resp["choices"][0]["message"]["content"].strip()
+    for chunk in stream:
+        delta = chunk["choices"][0]["delta"]
+        token = delta.get("content")
+        if token:
+            yield token
 
 
 # --- public types ------------------------------------------------------------
@@ -302,8 +277,7 @@ def generate(result: PipelineResult) -> GenerationResult:
 
     Honors `result.retrieval.gated` strictly (surfaces the canned message
     and skips the LLM call). On the happy path, reorders hits safety-first,
-    runs the LLM, re-prompts once if no citations were produced, and
-    appends a soft warning if the retry still came back unmarked.
+    runs the LLM, then strips any spurious canned phrase from a cited answer.
 
     A bare `except Exception` wraps the LLM call so a model-runtime failure
     degrades to the canned low-confidence response instead of crashing the
@@ -324,12 +298,6 @@ def generate(result: PipelineResult) -> GenerationResult:
 
     try:
         text = _call_llm(question, ordered_hits)
-        if not _has_citation_markers(text):
-            text = _call_llm_retry_with_citation_demand(
-                question, ordered_hits, text
-            )
-            if not _has_citation_markers(text):
-                text += "  [warning: model produced no citation markers]"
         text = _strip_canned_phrase_from_cited_answer(text)
     except Exception as exc:  # llama-cpp runtime errors, OOM, etc.
         print(f"generate: LLM call failed ({exc!r}); falling back.", file=sys.stderr)
@@ -351,6 +319,54 @@ def generate(result: PipelineResult) -> GenerationResult:
 def answer(query: str) -> GenerationResult:
     """End-to-end convenience: parse_query -> retrieve -> generate."""
     return generate(run(query))
+
+
+def answer_stream(query: str):
+    """End-to-end streaming: parse -> retrieve -> stream LLM tokens.
+
+    Yields typed dicts in order:
+      {"type": "meta",  "gated": bool, "top_score": float, "citations": [...]}
+      {"type": "token", "text": str}   -- one per LLM token
+      {"type": "done"}
+
+    Citations are known before the LLM call (they are the safety-reordered
+    hits), so the meta event is emitted the moment retrieval completes and
+    token events follow immediately -- no full-response buffering required.
+    On LLM errors the fallback canned message is emitted as a token event
+    rather than raising, so the caller always sees a clean done event.
+    """
+    result = run(query)
+    retrieval = result.retrieval
+
+    if retrieval.gated:
+        yield {
+            "type": "meta",
+            "gated": True,
+            "top_score": retrieval.top_score,
+            "citations": [],
+        }
+        yield {"type": "token", "text": retrieval.message or LOW_CONFIDENCE_MESSAGE}
+        yield {"type": "done"}
+        return
+
+    ordered_hits = _reorder_safety_first(retrieval.hits)
+    question = result.parsed.rewritten
+
+    yield {
+        "type": "meta",
+        "gated": False,
+        "top_score": retrieval.top_score,
+        "citations": [asdict(h) for h in ordered_hits],
+    }
+
+    try:
+        for token in _call_llm_stream(question, ordered_hits):
+            yield {"type": "token", "text": token}
+    except Exception as exc:
+        print(f"answer_stream: LLM error ({exc!r}); sending fallback.", file=sys.stderr)
+        yield {"type": "token", "text": LOW_CONFIDENCE_MESSAGE}
+
+    yield {"type": "done"}
 
 
 # --- CLI ---------------------------------------------------------------------

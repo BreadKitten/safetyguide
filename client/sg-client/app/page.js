@@ -29,6 +29,28 @@ export default function Home() {
     setInput('');
     setBusy(true);
 
+    // meta arrives before any tokens; hold it here until the first token lands.
+    let pendingMeta = { citations: [], gated: false };
+    // Whether we've added the assistant message bubble yet.
+    let messageAdded = false;
+
+    // Add the assistant bubble on first token so no empty shell shows during retrieval.
+    const addMessage = (fields) => {
+      setMessages((m) => [
+        ...m,
+        { role: 'assistant', citations: [], gated: false, streaming: true, ...fields },
+      ]);
+      messageAdded = true;
+    };
+
+    // Patch the last message in the array (only valid after addMessage).
+    const patch = (fields) =>
+      setMessages((m) => {
+        const next = [...m];
+        next[next.length - 1] = { ...next[next.length - 1], ...fields };
+        return next;
+      });
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -36,26 +58,42 @@ export default function Home() {
         body: JSON.stringify({ query }),
       });
 
-      const data = await res.json();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
 
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          text: data.answer,
-          citations: data.citations ?? [],
-          gated: !!data.gated,
-        },
-      ]);
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop(); // keep the incomplete trailing line in the buffer
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const event = JSON.parse(line.slice(6));
+          if (event.type === 'meta') {
+            pendingMeta = { citations: event.citations, gated: event.gated };
+          } else if (event.type === 'token') {
+            if (!messageAdded) {
+              addMessage({ text: event.text, ...pendingMeta });
+            } else {
+              setMessages((m) => {
+                const next = [...m];
+                const last = next[next.length - 1];
+                next[next.length - 1] = { ...last, text: last.text + event.text };
+                return next;
+              });
+            }
+          } else if (event.type === 'done') {
+            if (messageAdded) patch({ streaming: false });
+            break outer;
+          }
+        }
+      }
     } catch (err) {
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          text: `Network error: ${String(err)}`,
-          gated: true,
-        },
-      ]);
+      const errMsg = { text: `Network error: ${String(err)}`, gated: true, streaming: false };
+      if (messageAdded) patch(errMsg);
+      else addMessage(errMsg);
     } finally {
       setBusy(false);
     }
@@ -118,6 +156,12 @@ function basename(path) {
   return String(path).split(/[\\/]/).pop();
 }
 
+// Strip a run of [n] citation markers the model sometimes emits at the very
+// start of a response before the answer body (e.g. "[3][4]\n\nFor two weeks…").
+function stripLeadingCitations(text) {
+  return text.replace(/^\s*(\[\d+\]\s*)+\n/, '').trimStart();
+}
+
 function Message({ m }) {
   const isUser = m.role === 'user';
 
@@ -131,10 +175,10 @@ function Message({ m }) {
         }`}
       >
         <div className='whitespace-pre-wrap text-sm leading-relaxed'>
-          {m.text}
+          {isUser ? m.text : stripLeadingCitations(m.text)}
         </div>
 
-        {!isUser && m.citations?.length > 0 && (
+        {!isUser && !m.streaming && m.citations?.length > 0 && (
           <ol className='mt-3 space-y-1 border-t border-sage-100 pt-2 text-xs text-sage-700'>
             {m.citations.map((c, idx) => (
               <li key={c.chunk_id ?? idx}>

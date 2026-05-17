@@ -27,7 +27,7 @@ Sits between the raw user input and `src.retrieve`. Two jobs:
      The table lives in source. The model can never extend it at runtime.
 
 The `_LLM` singleton loaded here is the same object `src.generate` will
-reuse for answer synthesis, so the 4.7 GB Q4_K_M GGUF is loaded once per
+reuse for answer synthesis, so the ~1.9 GB Q4_K_M GGUF is loaded once per
 process.
 """
 from __future__ import annotations
@@ -43,8 +43,8 @@ from typing import Any
 from server.src.ingest import INDEX_DIR
 
 # --- tuning knobs ------------------------------------------------------------
-# MODEL_PATH: Q4_K_M GGUF of Qwen2.5-7B-Instruct (see CLAUDE.md for the
-# model decision and the plan file for download steps).
+# MODEL_PATH: Q4_K_M GGUF of Qwen2.5-7B-Instruct (~4.7 GB, 2-shard split).
+# llama-cpp-python auto-loads shard 2 from the first shard's path.
 # N_CTX: 2048 is comfortably more than the system prompt + few-shots + a
 # single user query. Parsing doesn't need a long context.
 # N_GPU_LAYERS=-1: offload every layer to Metal on Apple Silicon. The
@@ -53,9 +53,6 @@ from server.src.ingest import INDEX_DIR
 # we want byte-identical rewrites across reruns so the tests are stable.
 # MAX_TOKENS=96: our JSON object is ~30 tokens. 96 leaves headroom for a
 # verbose normalization without letting the model ramble.
-# Q4_K_M is distributed as a 2-shard split GGUF (sums to ~4.7 GB). llama-cpp
-# auto-loads the second shard if we pass the path to the first; the file
-# naming convention "-00001-of-00002.gguf" is the cue.
 MODEL_PATH = (
     Path(__file__).resolve().parent.parent
     / "models" / "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf"
@@ -122,16 +119,16 @@ def _get_known_types() -> tuple[str, ...]:
 
 def _get_llm() -> Any:
     """Lazy llama_cpp.Llama. Exported via this getter so src.generate can
-    reuse the same loaded model -- a second 4.7 GB load in the same process
-    is wasteful and on a laptop will OOM."""
+    reuse the same loaded model -- a second load in the same process is
+    wasteful and on a laptop will OOM."""
     global _LLM
     if _LLM is not None:
         return _LLM
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             f"Missing model file: {MODEL_PATH}. Download with:\n"
-            f"  hf download Qwen/Qwen2.5-7B-Instruct-GGUF "
-            f'--include "*q4_k_m*" --local-dir models'
+            f"  huggingface-cli download Qwen/Qwen2.5-7B-Instruct-GGUF "
+            f'--include "*q4_k_m*" --local-dir server/models'
         )
     from llama_cpp import Llama
     _LLM = Llama(

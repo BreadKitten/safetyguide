@@ -91,6 +91,14 @@ These are the rough edges that shaped the current code. They're documented here 
 - **Citation contamination in answers.** Qwen2.5-7B occasionally violated the system prompt by citing real chunks *and* hedging with the canned refusal in the same answer. We split the prompt rule into two explicit cases ("no context → canned phrase only" and "context → cite, never use the canned phrase") and added a defensive post-process that strips the canned phrase whenever an answer also contains `[n]` markers.
 - **Disaster-type tagging by content keywords mislabeled brochures.** Our first tagger labeled any chunk mentioning "earthquake" as `earthquake`. Multi-hazard prep brochures got mislabeled the moment they mentioned earthquakes as one of several risks. We replaced this with filename-driven defaults and a tight allowlist of override phrases like `"drop, cover, and hold on"` and `"great washington shakeout"` that promote individual chunks from `general` into a specific hazard.
 - **Guaranteeing a formatted response from a 7B model.** Getting a 7B local model to consistently produce well-formed cited output is harder than getting GPT-4 to do the same thing. We addressed this through a strict system prompt, a one-shot retry path when no citation markers appear, and the safety-first reordering that exploits LLM primacy bias so the warning-heavy chunk lands at `[1]`/`[2]`.
+- **Switching to a smaller model did not reduce latency.** We benchmarked Qwen2.5-3B-Instruct Q4_K_M as a drop-in replacement for the 7B model. Results across five representative queries run through the full parse → retrieve → generate pipeline on Apple Silicon:
+
+  | Model | Warmup | Steady-state avg | Min / Max |
+  |-------|--------|------------------|-----------|
+  | 3B Q4_K_M | 10.38 s | 6.36 s | 3.37 s / 10.48 s |
+  | 7B Q4_K_M | 9.90 s | 6.32 s | 3.20 s / 10.49 s |
+
+  The two models are statistically identical. With `n_gpu_layers=-1` both are fully Metal-offloaded, so wall-clock latency is dominated by **output token count** (~200–350 tokens per answer) rather than parameter count. The per-token speed advantage of 3B exists but is smaller than the query-to-query variance from answer length. The pipeline stayed on 7B. The real levers for reducing end-to-end latency are: lowering `MAX_TOKENS` in `generate.py`, reducing `FINAL_TOP_K` in `retrieve.py` from 4 to 3, or streaming the FastAPI response so the UI renders tokens as they arrive.
 
 ---
 
@@ -188,7 +196,7 @@ The three files in `server/index/` (`faiss.index`, `bm25.pkl`, `chunks.json`) ar
 ### 1. Clone and install Python dependencies
 
 ```bash
-git clone https://github.com/BreadKitten/safetyguide.git
+git clone https://github.com/AdiKum26/safetyguide.git
 cd safetyguide
 
 python -m venv .venv
